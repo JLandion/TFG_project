@@ -1,0 +1,196 @@
+---
+title: "Prototipo de TFG"
+author: "Juan Luis Andión Tápiz"
+date: "9/4/2020"
+toc: true
+output: word_document
+---
+
+```{r, include=FALSE}
+library(printr)
+library(readxl)
+library(dplyr)
+library(summarytools)
+library(glm2)
+library(tidyverse)
+library(skimr)
+library(broom)
+# Importamos la base de datos limpia ####
+datos_def <- read_excel("datos_def_excel")
+names(datos_def)
+summary(datos_def)
+
+
+
+# Seleccionamos nuestras variables de interes
+datos_modelo <- subset(datos_def, select = c("SAP", "sexo", "edad","altura","peso", "niv_est","enf_cron","IMC","fuma", "sit_lab",
+                                             "frec_act_fis","estrato","ingreso","ingreso_eq","GHQ_12","m2","n_adultos","n_menores",
+                                            "ruido", "malos","agua","limpieza",
+                                            "cont_indus", "cont_otras","escasez_verde", "molest_animal", "delincuencia"))
+```
+
+\newpage
+# Introducción
+
+Cada vez son más los estudios que explican los factores que afectan a la salud de un individuo. Algunos de esos factores son los relacionados con las características de la vivienda, tal y como se demuestra en el estudio realizado por Navarro(referencia), en el cual se demuestra que vivir en un hogar con goteras o donde haya cierto grado de delincuencia afecta de manera negativa a la salud de los individuos. Algunos estudios equiparan estos problemas de la vivienda con malos hábitos como el consumo de alcohol o de tabaco a la hora de analizar en qué grado afectan a la salud. 
+
+Según Navarro, podemos considerar 4 áreas principales de análisis: (1) el estudio de los problemas en la salud que sufren aquellos individuos a raíz de la situacóon del mercado inmobiliario; (2) el análisis sobre el acceso a los servicios sanitarios para las personas sin hogar; (3) el asesoramiento de las consecuencias patológicas de vivir en un hogar en malas condiciones; y (4) examinar el estres asociado a no disponer de un hogar adecuado y los efectos en la salud mental que conlleva. Desarrollar este tipo de relaciones favorece su presencia en las agendas políticas de los gobiernos y, en términos de eficiencia, algunas políticas sobre los hogares podría reducir los costes de salud asociados a unas características de la vivienda deficientes.
+
+Por lo tanto, la literatura en este sentido quiere dar la importancia que se merece al hecho de que vivir en un hogar pobre afecta de manera negativa al estado de salud. Sin embargo, hasta hace poco no resultaba sencillo para los investigadores aislar este efecto del resto de factores que afectan al estado de salud para tener una imagen clara de la relación entre las características de la vivienda y el estado de salud. En consecuencia, es necesario disponer de información no solo del estado de la vivienda, sino de todas las variables que afectan al estado de salud, solo así es posible aislar este efecto para poder analizarlo con la mayor exactitud posible.
+
+El objetivo de este trabajo es analizar con detalle la influencia que tiene para el estado de salud vivir en un hogar con elevada presencia de vandalismo o animales que ocasionen problemas en el entorno, nivel de contaminación, etc. Para ello, se emplea como base de datos la Encuesta Nacional de Salud en España elaborada por el Instituto Nacional de Estadística en el año 2017, dichos datos se introducen en dos modelos probabilístico donde la variable endógena  es el estado de salud auto-percibido: en el primer modelo consideramos todas las variables recogidas por la encuesta y que están relacionadas con el estado de salud, para luego introducir los datos sobre las características de la vivienda y efectuar una análisis sobre las diferencias entre ambos modelos, de esta manera aislamos el efecto que tienen las condiciones del hogar en el estado de salud.
+
+La estructura de este artículo será la siguiente: primero explicaremos detalladamente cada una de las variables que se van a emplear y un análisis descriptivo de las mismas; seguidamente se explica la especificación del modelo y la metodología que se emplea; comentaremos todos los resultados obtenidos de este análisis y, finalmente, las conclusiones a las que se han llegado.
+
+
+Según el INE,en el 2018 España tenía un 21.5% de sus ciudadanos en riesgo de pobreza,este dato  lo sitúa en el 5º país de  Europa con mayor tasa de riesgo de pobreza. Una buena parte de este sector de la población es susceptible de no disponer de un hogar que satisface las condiciones mínimas de una vivienda saludable, entendiendo esto como un hogar con acceso a agua de calidad o sin un elevado grado de vandalismo en la zona de residencia, entre otros factores.
+
+ Por lo tanto, es de suma relevancia analizar qué aspectos están relacionados con las características de la vivienda y, en consecuencia, con unas condiciones de su vivienda que afectan de manera directamente negativa a su salud física, tanto es así que recientemente miles de ciudadanos vascos salieron a la calle para manifestar las repercusiones negativas que estaba teniendo el derrumbe del vertedero de Zaldibar sobre su salud. Y es que la Organización Mundial de La Salud ya ha emitido y divulgado varios informes donde tratan la importancia de disponer de un hogar saludable, término que queda perfectamente definido en el documento disponible en el anexo. El nivel de  ruido molesto, de contaminación en la localidad son algunos de los otros factores más influyentes a la hora de relacionar las características del hogar con la salud del individuo.
+
+Este tema cobra ahora muchísima importancia dado el estado de alarma en el que nos encontramos actualmente en España debido a la propagación del famoso Covid-19. En este sentido, ahora más que nunca es literalmente vital disponer de un hogar en el que sus miembros no solo se sientan seguros, sino que además, el estar confinado en una vivienda con goteras, humedades, o sin un suministro de agua limpia conlleva un detrimento de la salud de los individuos del hogar.
+
+El propósito de este artículo es ahondar en la importancia del estado de nuestra vivienda de cara a nuestra salud mediante el empleo de , para ello, En este artículo se empleará la Encuesta Nacional de Salud en España para adultos y hogares que incluye tanto variables de (...) como sobre las características de la vivienda, dichas variables se especifican con total detalle más adelante.
+
+Incluso podemos encontrar varios artículos que vinculan el estado del barrio con incrementos en la tasa de mortalidad en invierno
+
+
+
+
+# Descripción de los datos
+
+Como ya hemos comentado, emplearemos la Encuesta Nacional De Salud en España como base de datos para ajustar el modelo. Dicha encuesta está dividida en tres partes: una encuesta con preguntas referidas al hogar, otra para los adultos y otra para los menores. Para comprender mejor el uso de esta base de datos hay que explicar que la encuesta del hogar se efectúa en más de 25000 viviendas, en las cuales todos los individuos deben contestar a dicha encuesta y se selecciona a un adulto de manera aleatoria de cada hogar para contestar la encuesta de adultos, lo mismo sucede para los menores si los hubiere. 
+
+```{r datos_modelo, eval=TRUE, echo=FALSE}
+
+# Codigo para generar una tabla que contengan los coeficientes (considerando las variables como tipo numerico, no como factor) del modelo y los estadisticos descriptivos
+options(digits=5,scipen=999)
+datos_modelo %>%
+  as_tibble() %>%
+  mutate_at(vars(SAP), factor) %>%
+  select(SAP, sexo, edad, niv_est, enf_cron, IMC, fuma, sit_lab, frec_act_fis, estrato, ingreso_eq, GHQ_12, m2,
+         ruido, malos, agua, limpieza, cont_indus, cont_otras, escasez_verde, molest_animal, delincuencia) -> limpio
+
+skim(limpio) %>%
+  as_tibble() -> descriptivos
+
+
+modelo <- glm( SAP ~sexo + edad + niv_est + enf_cron + IMC + fuma + sit_lab +
+                frec_act_fis + estrato  + ingreso_eq + GHQ_12 + m2  + 
+                ruido + malos + agua + limpieza + cont_indus + cont_otras + escasez_verde + molest_animal + delincuencia, 
+              data = datos_modelo, family = binomial(link = "logit"),na.action = "na.omit")
+tidy(modelo) %>%
+  rename(skim_variable = term) %>% #para que coincida el nombre en el join
+  inner_join(descriptivos)  %>%
+  select(variable = skim_variable,
+         coeficiente = estimate,
+         error = std.error,
+         media = numeric.mean,
+         desviación = numeric.sd,
+         mínimo = numeric.p0,
+         máximo = numeric.p100,
+         v_perdidos = n_missing
+  )
+```
+
+Estado de salud auto-percibido(SAP):
+```{r datos_summary,eval=TRUE,echo=FALSE}
+options(digits=3,scipen=999)
+summary(datos_modelo$SAP)
+```
+
+* Los valores 1,2 y 3 corresponden a los estados “Muy bueno”, “Bueno” y “Regular”, respectivamente y se les reasigna el valor 0.
+* Los valores 4 y 5 corresponden a los estados “Malo” y “Muy malo", respectivamente y se les reasigna el valor 1.
+
+\newpage
+## Variables que no se han recodificado ni manipulado:
+
+
+* **Edad** (edad)
+
+
+* **Sexo** (sexo):
+    * Se recodifica el valor 2, que corresponde al sexo femenino, por el valor 0.
+
+
+* **Índice de masa corporal** (IMC):
+    * 1: Peso insuficiente; 2: Normopeso; 3: Sobrepeso; 4: Obesidad
+
+
+* **¿Fuma actualmente?** (fuma):
+    * 1: Fuma a diario; 2: Fuma pero no a diario; 3: No fuma actualmente pero sí en el pasado;
+      4: Nunca ha fumado.
+      
+
+* **Situación laboral** (sit_lab):
+    * 1: Trabajando; 2: En desempleo; 3: Jubilado o prejubilado; 4: Estudiando; 5: Incapacitado para trabajar; 6: Labores         del hogar; 7: Otros.
+
+
+* **Frecuencia con la que realiza alguna actividad física en su tiempo libre** (frec_act_fis):
+    * 1: No hace ejercicio; 2: Actividad física ocasionalmente; 3: varias veces al mes; 4: varias veces a la semana.
+
+
+* **Metros cuadrados del hogar** (m2)
+
+
+* **Número de adultos en el hogar** (n_adultos)
+
+
+* **Número de menores en el hogar** (n_menores)
+
+
+
+## Variables que se han recodificado
+
+* **Nivel de estudios** (niv_est):
+
+    * Los valores 2 y 3 corresponden a un nivel de analfabetismo y de educación primaria incompleta. Se recodifican por el        valor 1.
+    * 4 y 5 para Educación primaria completa y educación secundaria completa o incompleta. Valor 2.
+    * 6 y 7 para bachillerato y grado medio. Valor 3.
+    * 8 y 9 para grado superior y estudios universitarios. Valor 4.
+
+
+* **Ingreso equivalente** (ingreso_eq):
+
+    * Para obtener esta variable  se divide el ingreso mensual entre las unidades de consumo obtenidas a través de la escala Oxford: $uds\_consumo = 1 + (a-1)*0.7 + b*0.5$    1 = primer adulto;       b = resto de adultos ; b = número de menores.
+    
+    * La variable ingreso está agrupada por intervalos y a cada intervalo se le asigna un valor que va de 1 a 12. Se recodifica la para que cada intervalo tenga el valor de la marca de clase
+        
+        
+* **GHQ-12** (GHQ_12):
+    * Esta variable es la suma de los valores de 12 variables relacionada con la esfera         mental. Cada respuesta admite tres respuesta que van de 1 a 3. Cuanto más elevada         sea la cifra indica mayores problemas en la esfera mental.
+
+
+## Características de la vivienda
+
+1: Mucho; 2: algo; 3: nada.
+
+
+* **Ruido procedente del exterior** (ruido)
+
+
+* **Malos olores procedentes del exterior** (olores)
+
+
+* **Agua de consumo de mala calidad** (agua)
+
+
+* **Poca limpieza en las calles** (limpieza)
+
+
+* **Contaminación del aire elevada por industria cercana** (cont_indus)
+
+
+* **Contaminación del aire elevada por otras causas** (cont_otras)
+
+
+* **Escasez de zonas verdes** (escasez_verde)
+
+
+* **Presencia de animales que causan importantes molestias** (molest_animal)
+
+
+* **Delincuencia, violencia o vandalismo** (delincuencia)
+
+
+## Valores perdidos
+Los valores descriptivos que se han mostrado son los de la base de datos completa. El número total de valores perdidos si incluimos todas las variables en el modelo excepto las características de la vivienda es 8574, una vez incluidas dichas variables hay un total de 8716 observaciones perdidas.
