@@ -17,6 +17,3 @@ En este código también se generan tres archivos de datos que pueden abrirse co
     se efectuarán las siguientes estimaciones
     
 * Las estiamciones (modelo logit binomial) se efectúan en los script llamados `model_1.R` y `model_2.R`.
-* En el archivo `script_logit.R` se incluye los ejemplos incluidos en el PDF del paquete "glm" y así poder ir familiarizándonos 
-con las posibilidades que ofrece este paquete, que es el más importante de este proyecto.
-
